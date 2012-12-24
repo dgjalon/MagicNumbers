@@ -76,23 +76,35 @@ Board.prototype.isEmptyPos = function(pos){
 Board.prototype.isEmptyRow = function(row){
     var result = true;
     for(var col=0;col<this.maxCols;col++){
-        //console.log(row+", "+col);
         result = this.isEmptyPos({x:row, y:col});
         if (!result)
             break;
     }
     return result;
 }
+Board.prototype.isFullRow = function(row){
+    var result = false;
+    for(var col=0;col<this.maxCols;col++){
+        result = !this.isEmptyPos({x:row, y:col});
+        if (!result)
+            break;
+    }
+    return result;
+}
 Board.prototype.update = function(){
+    var update = false;
     // Convert to zeros
     for(var row=this.maxRows-1; row>0; row--){
         for(var col=this.maxCols-1; col>0; col--){
-            this.simplify(this.table[row][col].number, {x:row, y:col});
+            var res = this.simplify(this.table[row][col].number, {x:row, y:col});
+            if (res)
+                update = true;
         }
     }
     // Compact all cols
     for (var col = 0; col < this.maxCols; col++)
         this.setCol(col, this.compactCol( this.getCol(col) ) );
+    return update;
 }
 Board.prototype.compactCol = function(aCol){
     var aNoZeros = aCol.filter(function(x) { return x.number != 0 });
@@ -102,16 +114,19 @@ Board.prototype.compactCol = function(aCol){
     return aNoZeros.reverse();
 }
 Board.prototype.simplify = function(value, pos){
+    var simplify = false;
     if ((value != 0)&&(value != 1)){
         var s = new Set();
         s.add(pos);
         var allAdjacents = this.getAdjacents(s, 0);
         if (value <= allAdjacents.length){
+            simplify = true;
             for(var i=0;i<allAdjacents.length;i++){                
                 this.table[allAdjacents[i].x][allAdjacents[i].y] = new Ball(0);
             }
         }
     }
+    return simplify;
 }
 Board.prototype.getCol = function(col){
     var aCol = new Array()
@@ -170,14 +185,10 @@ Board.prototype.getEquals = function(pos){
     return adjacentsEquals;
 }
 Board.prototype.getAdjacents = function(psSet, len){
-    var new_len = psSet.size();
-    //console.log("LENGTH: "+len);console.log("NEW_LENGTH: "+new_len);console.log("\n");
-    //console.log("PSET:");
-    //console.log(psSet.getAll());console.log("\n"); 
+    var new_len = psSet.size(); 
     if ((psSet.size() == len)){
         return psSet.getAll();
-    }
-       
+    }     
     var psList = psSet.getAll();
     for (var i=0; i < psList.length; i++){        
         var adjacentsEquals = this.getEquals(psList[i]);
@@ -229,17 +240,23 @@ function Game(){
     board.draw();
     
     while(!game_over){
+        if (board.isFullRow(0)){
+            game_over = true;
+            continue;
+        }
         console.log("MOVE: "+moves);
         var new_ball = ball_stack.getBall();
         console.log(new_ball);
         console.log(ball_stack);
         board.draw();
-        
+                             
         var validPos = false;
         while(!validPos){
-            validPos = board.isValidPos({x:0, y:Math.floor((Math.random() * board.maxCols))});
+            var pos = {x:0, y:Math.floor((Math.random() * board.maxCols))};
+            validPos = board.isValidPos(pos);
         }
-        board.addBall(validPos, new_ball);
+        board.addBall(pos, new_ball);
+        board.draw();
         
         if (moves % LINE_MOVES == 0){
             if (board.isEmptyRow( 0 )){
@@ -251,9 +268,14 @@ function Game(){
                 continue;
             }
         }
-        board.update();                
+        if (board.update()){
+            console.log("****************** UPDATE");
+            board.draw();
+        }
         moves++;
     }
+    console.log("FINAL:")
+    board.draw();
 }
 
 
