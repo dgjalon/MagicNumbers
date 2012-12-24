@@ -274,7 +274,7 @@ function Game(){
         }
         moves++;
     }
-    console.log("FINAL:")
+    console.log("FINAL:");
     board.draw();
 }
 
