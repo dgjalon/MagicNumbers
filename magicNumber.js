@@ -188,7 +188,7 @@ Board.prototype.getAdjacents = function(psSet, len){
     var new_len = psSet.size(); 
     if ((psSet.size() == len)){
         return psSet.getAll();
-    }     
+    }
     var psList = psSet.getAll();
     for (var i=0; i < psList.length; i++){        
         var adjacentsEquals = this.getEquals(psList[i]);
@@ -197,7 +197,7 @@ Board.prototype.getAdjacents = function(psSet, len){
     }
     return this.getAdjacents(psSet, new_len);
 }
-Board.prototype.draw = function(){
+Board.prototype.draw_text = function(){
     var res = "";
     for(var row = 0; row < this.table.length; row++) {
         for(var col = 0; col < this.table[row].length; col++) {
@@ -206,6 +206,36 @@ Board.prototype.draw = function(){
         res += "\n";
     }
     console.log(res + "\n");
+}
+Board.prototype.draw = function(){
+    this.draw_text();
+    $("#sortable").empty();
+    for(var row = 0; row < this.table.length; row++) {
+        for(var col = 0; col < this.table[row].length; col++) {
+            var number=this.table[row][col].number;
+            $("#sortable").append('<div id="'+row+col+'" data-value="'+number+'" class="draggable ui-state-default">'+number+'</div>');
+        }
+    }
+    $( ".draggable" )
+        .draggable({ 
+            revert: "invalid",
+            start: function(){
+                console.log($(this).attr("data-value"));
+            },
+            stop: function(){
+                console.log($(this).attr("id"));
+                $(this).effect("bounce", { times:3 }, 400);//. attr("id")).;
+            }
+        })
+        .droppable({
+            /*activeClass: "ui-state-hover",*/
+            hoverClass: "ui-state-active",
+            drop: function( event, ui ) {
+                console.log($(this).attr("data-value"));
+                //$( this ).addClass( "ui-state-highlight" )                    
+            }
+        });
+    $( ".draggable" ).disableSelection();
 }
 
 
@@ -232,17 +262,19 @@ Set.prototype.size = function(){
 function Game(){
     var moves = 0;
     var LINE_MOVES = 5;
+    var COLS = 5;
+    var ROWS = 8;
     var game_over = false;
     var ball_stack = new BallStack();
-    var board = new Board(5, 8);
+    var board = new Board(COLS, ROWS);
     board.initialize(true);
     board.update();
     board.draw();
     
-    while(!game_over){
+    //while(!game_over){
         if (board.isFullRow(0)){
             game_over = true;
-            continue;
+    //        continue;
         }
         console.log("MOVE: "+moves);
         var new_ball = ball_stack.getBall();
@@ -265,7 +297,7 @@ function Game(){
                 board.draw();
             }else{
                 game_over = true;
-                continue;
+     //           continue;
             }
         }
         if (board.update()){
@@ -273,7 +305,7 @@ function Game(){
             board.draw();
         }
         moves++;
-    }
+    //}
     console.log("FINAL:");
     board.draw();
 }
@@ -287,4 +319,9 @@ function Game(){
  * START THE GAME
  *****************/
 var level = 5;
-var game = new Game();
+$(function() {
+    
+    
+    var game = new Game();
+    
+});
