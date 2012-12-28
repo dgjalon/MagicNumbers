@@ -12,31 +12,47 @@
     /*#sortable { list-style-type: none; margin: 0; padding: 0; width: 550px; }
     #sortable li { margin: 3px 3px 3px 0; padding: 1px; float: left; width: 100px; height: 90px; font-size: 4em; text-align: center; }
     */
+    
     #wrap {
         width:900px;
+        min-height: 600px;
         margin:0 auto;
     }
     #left_col {
         float:left;
-        width:600px;
+        width:550px;
+        background-color: black;
     }
     #right_col {
         float:right;
-        width:300px;
+        width:350px;
     }
-    #sortable { list-style-type: none; margin: 0; padding: 0; width: 550px; }
+    #sortable { list-style-type: none; margin: 0; padding-left: 8px; width: 550px; }
     .draggable { margin: 3px 3px 3px 0; padding: 1px; float: left; width: 100px; height: 90px; font-size: 4em; text-align: center; }
-
-    #stack_balls { list-style-type: none; margin: 0; padding: 0; width: 150px; }
+    #stack_balls { list-style-type: none; margin: 0; /*padding: 0;*/padding-left: 8px; width: 150px; }
     .stack_element{ margin: 3px 3px 3px 0; padding: 1px; float: left; width: 100px; height: 90px; font-size: 4em; text-align: center; }
     .invisible{ opacity: 0; }
+    [data-value="1"] {        
+        background: url("ui-bg_glass_100_fdf5ce_1x400.png") repeat-x scroll 50% 50% #E6E6E6;
+    }
+    [data-value="2"] {
+        background: url("ui-bg_glass_75_d0e5f5_1x400.png") repeat-x scroll 50% 50% #E6E6E6;
+    }
+    [data-value="3"] {
+        background: url("ui-bg_glass_85_dfeffc_1x400.png") repeat-x scroll 50% 50% #E6E6E6;
+    }
+    [data-value="4"] {
+        background: url("ui-bg_glass_95_fef1ec_1x400.png") repeat-x scroll 50% 50% #E6E6E6;
+    }
     </style>
     </head>
     <body>
-        <div><button id="next">Next</button></div>
-        <div><button id="add_line">Add Line</button></div>
-        <div><button id="compact">Compact</button></div>
-        <div><button id="update">Update</button></div>
+        <div>
+            <button id="next">Next</button>
+            <button id="add_line">Add Line</button>
+            <button id="compact">Compact</button>
+            <button id="update">Update</button>
+        </div>
         <div id="wrap">
             <div id="left_col">
                 <div id="sortable"></div>

@@ -432,7 +432,7 @@ function Game(){
 /*****************
  * START THE GAME
  *****************/
-var level = 5;
+var level = 6;
 var board;
 var ball_stack;
 $(function() {
