@@ -10,14 +10,23 @@ Ball.prototype.fusion = function(ball){
 
 
 function BallStack(){
-    var STACK_BALLS = 3;
+    this.STACK_BALLS = 3;
     this.stack = new Array();
-    for(i=0; i < STACK_BALLS; i++)
+    for(var i=0; i < this.STACK_BALLS; i++)
         this.stack.push( new Ball() );
 }
 BallStack.prototype.getBall = function(){
+    var ball_res = new Ball( this.stack[0].number );
+    this.stack.shift()
     this.stack.push( new Ball() );
-    return this.stack.shift();
+    $("#stack_balls div").last().effect("explode", "slow");
+    this.draw();
+    return ball_res;
+}
+BallStack.prototype.draw = function(){
+     $("#stack_balls").empty();
+     for(var i=0; i < this.STACK_BALLS; i++)
+         $("#stack_balls").prepend('<div data-value="'+this.stack[i].number+'" class="stack_element ui-state-default">'+this.stack[i].number+'</div>');
 }
 
 
@@ -53,7 +62,7 @@ Board.prototype.addLine = function(){
         this.setRow(row-1, this.getRow(row));
     }
     var newRow = new Array();
-    for (var col=0;col<this.maxCols-1;col++){
+    for (var col=0;col<this.maxCols;col++){
         newRow.push(new Ball());
     }
     this.setRow(this.maxRows-1, newRow);
@@ -91,26 +100,69 @@ Board.prototype.isFullRow = function(row){
     }
     return result;
 }
+Board.prototype.isFullCol = function(col){
+    var result = false;
+    for(var row=0;row<this.maxRows;row++){
+        result = !this.isEmptyPos({x:row, y:col});
+        if (!result)
+            break;
+    }
+    return result;
+}
+Board.prototype.isFusionable = function(pos1, pos2){
+    return  (this.table[pos1.x][pos1.y].number != 0) &&
+            (this.table[pos2.x][pos2.y].number != 0) &&
+    ((this.table[pos1.x][pos1.y].number + this.table[pos2.x][pos2.y].number) <= level);
+}
+Board.prototype.fusion = function(pos_drag, pos_drop){
+    this.table[pos_drop.x][pos_drop.y].number += this.table[pos_drag.x][pos_drag.y].number;
+    this.table[pos_drag.x][pos_drag.y].number = 0;
+    // GUI
+    $("#"+pos_drop.x+pos_drop.y).html( this.table[pos_drop.x][pos_drop.y].number );
+    $("#"+pos_drag.x+pos_drag.y).html( 0 );
+}
+
 Board.prototype.update = function(){
+    var recall = false;
+    var board = this;
+    setTimeout( function(){
+        board.compact();
+        board.draw();
+    }, 250);
+    
+    setTimeout( function(){
+        recall = board.minimize();
+        console.log(recall);
+        setTimeout( function(){
+            board.compact();
+            board.draw();
+        }, 250);
+        if (recall)
+            board.update();
+    }, 450);    
+}
+Board.prototype.minimize = function(){
     var update = false;
     // Convert to zeros
-    for(var row=this.maxRows-1; row>0; row--){
-        for(var col=this.maxCols-1; col>0; col--){
+    for(var row=this.maxRows-1; row>=0; row--){
+        for(var col=this.maxCols-1; col>=0; col--){
             var res = this.simplify(this.table[row][col].number, {x:row, y:col});
             if (res)
                 update = true;
         }
     }
+    return update;
+}
+Board.prototype.compact = function(){
     // Compact all cols
     for (var col = 0; col < this.maxCols; col++)
         this.setCol(col, this.compactCol( this.getCol(col) ) );
-    return update;
 }
 Board.prototype.compactCol = function(aCol){
     var aNoZeros = aCol.filter(function(x) { return x.number != 0 });
     aNoZeros.reverse();
     for (var i=aNoZeros.length; i < aCol.length; i++)
-        aNoZeros.push(new Ball(0));
+        aNoZeros.push(new Ball(0));        
     return aNoZeros.reverse();
 }
 Board.prototype.simplify = function(value, pos){
@@ -121,7 +173,9 @@ Board.prototype.simplify = function(value, pos){
         var allAdjacents = this.getAdjacents(s, 0);
         if (value <= allAdjacents.length){
             simplify = true;
-            for(var i=0;i<allAdjacents.length;i++){                
+            for(var i=0;i<allAdjacents.length;i++){
+                $("#"+allAdjacents[i].x+allAdjacents[i].y).effect("explode");
+                $("#"+allAdjacents[i].x+allAdjacents[i].y).html(0);
                 this.table[allAdjacents[i].x][allAdjacents[i].y] = new Ball(0);
             }
         }
@@ -141,8 +195,13 @@ Board.prototype.getRow = function(row){
     return aCol;
 }
 Board.prototype.setCol = function(col, aCol){
-    for(var row = 0; row < aCol.length; row++)
+    for(var row = 0; row < aCol.length; row++){
         this.table[row][col] = aCol[row];
+        // GUI
+        $("#"+row+col).html(aCol[row].number);
+        $("#"+row+col).attr("data-value", aCol[row].number);        
+    }
+    $("div [data-value=0]").addClass("invisible");
 }
 Board.prototype.setRow = function(row, aRow){
     for(var col = 0; col < aRow.length; col++)
@@ -190,11 +249,11 @@ Board.prototype.getAdjacents = function(psSet, len){
         return psSet.getAll();
     }
     var psList = psSet.getAll();
-    for (var i=0; i < psList.length; i++){        
+    for (var i=0; i < psList.length; i++){
         var adjacentsEquals = this.getEquals(psList[i]);
         for (var j=0; j < adjacentsEquals.length; j++)
-            psSet.add(adjacentsEquals[j]);            
-    }
+            psSet.add(adjacentsEquals[j]);
+        }
     return this.getAdjacents(psSet, new_len);
 }
 Board.prototype.draw_text = function(){
@@ -208,6 +267,7 @@ Board.prototype.draw_text = function(){
     console.log(res + "\n");
 }
 Board.prototype.draw = function(){
+    var board = this;
     this.draw_text();
     $("#sortable").empty();
     for(var row = 0; row < this.table.length; row++) {
@@ -216,23 +276,38 @@ Board.prototype.draw = function(){
             $("#sortable").append('<div id="'+row+col+'" data-value="'+number+'" class="draggable ui-state-default">'+number+'</div>');
         }
     }
+    $("div [data-value=0]").addClass("invisible");
+    $("#sortable div.invisible").click( function () { 
+        var col = $(this).attr("id")[1];        
+        if(!board.isFullCol(col)){
+            board.addBall({x:0, y:col}, ball_stack.getBall());
+            board.draw();
+            board.update();
+        }
+    });
     $( ".draggable" )
         .draggable({ 
-            revert: "invalid",
-            start: function(){
-                console.log($(this).attr("data-value"));
-            },
-            stop: function(){
-                console.log($(this).attr("id"));
-                $(this).effect("bounce", { times:3 }, 400);//. attr("id")).;
-            }
+            zIndex: 100,
+            revert: "invalid"
         })
         .droppable({
-            /*activeClass: "ui-state-hover",*/
             hoverClass: "ui-state-active",
+            accept: function(drag) {
+                var pos_drag = $(drag).attr("id");
+                var pos_drop = $(this).attr("id");
+                pos_drag = {x:pos_drag[0], y:pos_drag[1]};
+                pos_drop = {x:pos_drop[0], y:pos_drop[1]};
+                return board.isFusionable(pos_drag, pos_drop);
+            },
             drop: function( event, ui ) {
-                console.log($(this).attr("data-value"));
-                //$( this ).addClass( "ui-state-highlight" )                    
+                var pos_drag = $(ui.draggable).attr("id");
+                var pos_drop = $(this).attr("id");
+                pos_drag = {x:pos_drag[0], y:pos_drag[1]};
+                pos_drop = {x:pos_drop[0], y:pos_drop[1]};
+                board.fusion(pos_drag, pos_drop);
+                $(ui.draggable).addClass("invisible");
+                //$(this).effect("bounce", { times:3 }, 400);
+                board.update();                
             }
         });
     $( ".draggable" ).disableSelection();
@@ -245,7 +320,7 @@ Set.prototype.remove = function(o) { delete this[o]; }
 Set.prototype.getAll = function(){
     var keys = [];
     for(var key in this){
-        if ( Number(key) )
+        if ( !isNaN(key) )
             keys.push({x:Number(key[0]), y:Number(key[1])});
     }
     return keys;        
@@ -263,18 +338,55 @@ function Game(){
     var moves = 0;
     var LINE_MOVES = 5;
     var COLS = 5;
-    var ROWS = 8;
+    var ROWS = 5;//8;
     var game_over = false;
-    var ball_stack = new BallStack();
-    var board = new Board(COLS, ROWS);
+    ball_stack = new BallStack();
+    board = new Board(COLS, ROWS);
     board.initialize(true);
-    board.update();
+    board.minimize();
+    board.compact();
     board.draw();
+    console.log(ball_stack);
+    ball_stack.draw();
     
-    //while(!game_over){
+    $("#next").click(function(){
+        console.log( ball_stack.getBall() ); 
+    });
+    
+    $("#add_line").click(function(){
+        board.addLine();
+        board.draw();
+        board.update();
+    });
+    $("#compact").click(function(){
+        board.compact();
+        board.draw();
+    });
+    $("#update").click(function(){
+        board.minimize();
+        setTimeout( function(){
+            $("#compact").click();
+        }, 250);
+    });
+    
+    
+    /*
+    while (!game_over){
+        if (board.isEmptyRow( 0 )){
+            console.log("-----> ADD LINE");
+            board.addLine();
+            board.draw();
+        }else{
+            game_over = true;
+            continue;
+        }
+    }*/
+    
+    
+    /*while(!game_over){
         if (board.isFullRow(0)){
             game_over = true;
-    //        continue;
+            continue;
         }
         console.log("MOVE: "+moves);
         var new_ball = ball_stack.getBall();
@@ -297,17 +409,19 @@ function Game(){
                 board.draw();
             }else{
                 game_over = true;
-     //           continue;
+                continue;
             }
         }
-        if (board.update()){
+        if (board.minimize()){
+            board.compact();
             console.log("****************** UPDATE");
             board.draw();
         }
         moves++;
-    //}
+    }
     console.log("FINAL:");
     board.draw();
+    */
 }
 
 
@@ -319,9 +433,10 @@ function Game(){
  * START THE GAME
  *****************/
 var level = 5;
+var board;
+var ball_stack;
 $(function() {
     
-    
     var game = new Game();
-    
+       
 });

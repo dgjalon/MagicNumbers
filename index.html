@@ -12,18 +12,41 @@
     /*#sortable { list-style-type: none; margin: 0; padding: 0; width: 550px; }
     #sortable li { margin: 3px 3px 3px 0; padding: 1px; float: left; width: 100px; height: 90px; font-size: 4em; text-align: center; }
     */
-    
+    #wrap {
+        width:900px;
+        margin:0 auto;
+    }
+    #left_col {
+        float:left;
+        width:600px;
+    }
+    #right_col {
+        float:right;
+        width:300px;
+    }
     #sortable { list-style-type: none; margin: 0; padding: 0; width: 550px; }
     .draggable { margin: 3px 3px 3px 0; padding: 1px; float: left; width: 100px; height: 90px; font-size: 4em; text-align: center; }
-    .ui-state-active{
-        z-index: -1;
-    }
+
+    #stack_balls { list-style-type: none; margin: 0; padding: 0; width: 150px; }
+    .stack_element{ margin: 3px 3px 3px 0; padding: 1px; float: left; width: 100px; height: 90px; font-size: 4em; text-align: center; }
+    .invisible{ opacity: 0; }
     </style>
     </head>
     <body>
-        <div id="sortable">
-            <!--<ul id="sortable"></ul>-->
-            
-        </div>
+        <div><button id="next">Next</button></div>
+        <div><button id="add_line">Add Line</button></div>
+        <div><button id="compact">Compact</button></div>
+        <div><button id="update">Update</button></div>
+        <div id="wrap">
+            <div id="left_col">
+                <div id="sortable"></div>
+            </div>
+            <div id="right_col">
+                <div id="stack_balls"></div>
+            </div>
+        </div><!-- wrap -->
+        
+        
+        
     </body>
 </html>
